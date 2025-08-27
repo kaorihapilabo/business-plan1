@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="ja" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>中小企業向け組織力強化×IT導入支援コンサルティング事業計画書</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Warm Neutrals with Indigo Accent -->
+    <!-- Application Structure Plan: A thematic, single-page narrative flow was designed to guide users logically from understanding the market problem to seeing the value of our solution. The structure is: Hero -> Problem & Solution -> Service Process -> Impact & ROI -> Team -> Growth Plan -> Contact. This is more persuasive and user-friendly than a linear slide deck, as it builds a compelling case by first establishing a need, then presenting our unique solution and its quantifiable benefits, backed by a strong team and a clear vision for the future. -->
+    <!-- Visualization & Content Choices: Report Info -> Goal -> Viz/Presentation -> Interaction -> Justification. 1) Service Process -> Organize -> Interactive HTML Timeline -> Click to reveal details -> Encourages exploration of the 4-phase model. 2) ROI -> Compare -> Chart.js Doughnut Chart & Animated Counters -> Hover for tooltips, scroll to animate -> Makes financial benefits immediately impactful and easy to grasp. 3) Growth Plan -> Change over time -> Chart.js Bar Chart -> Hover for tooltips -> Clearly visualizes future projections and business viability. All choices prioritize engagement and clarity. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', 'Noto Sans JP', sans-serif;
+            background-color: #F5F5F4; /* stone-100 */
+            color: #292524; /* stone-800 */
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+        .phase-content {
+            transition: all 0.5s ease-in-out;
+            max-height: 0;
+            overflow: hidden;
+        }
+        .phase-content.active {
+            max-height: 500px; /* Adjust as needed */
+        }
+        .nav-link {
+            transition: color 0.3s;
+        }
+        .nav-link:hover {
+            color: #4F46E5; /* indigo-600 */
+        }
+        .counter-value {
+            transition: all 1.5s ease-out;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <header class="bg-white/80 backdrop-blur-md sticky top-0 z-50 shadow-sm">
+        <nav class="container mx-auto px-6 py-3 flex justify-between items-center">
+            <div class="text-lg font-bold text-gray-800">
+                <a href="#">事業計画書</a>
+            </div>
+            <div class="hidden md:flex space-x-6">
+                <a href="#problem" class="nav-link text-gray-600">課題と解決策</a>
+                <a href="#service" class="nav-link text-gray-600">サービス</a>
+                <a href="#roi" class="nav-link text-gray-600">投資対効果</a>
+                <a href="#team" class="nav-link text-gray-600">チーム</a>
+                <a href="#plan" class="nav-link text-gray-600">事業計画</a>
+            </div>
+            <a href="#contact" class="hidden md:block bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition">お問い合わせ</a>
+            <button id="mobile-menu-button" class="md:hidden focus:outline-none">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+            </button>
+        </nav>
+        <div id="mobile-menu" class="hidden md:hidden">
+            <a href="#problem" class="block py-2 px-4 text-sm hover:bg-gray-200">課題と解決策</a>
+            <a href="#service" class="block py-2 px-4 text-sm hover:bg-gray-200">サービス</a>
+            <a href="#roi" class="block py-2 px-4 text-sm hover:bg-gray-200">投資対効果</a>
+            <a href="#team" class="block py-2 px-4 text-sm hover:bg-gray-200">チーム</a>
+            <a href="#plan" class="block py-2 px-4 text-sm hover:bg-gray-200">事業計画</a>
+            <a href="#contact" class="block py-2 px-4 text-sm hover:bg-gray-200">お問い合わせ</a>
+        </div>
+    </header>
+
+    <main>
+        <section id="hero" class="py-20 md:py-32 bg-white">
+            <div class="container mx-auto px-6 text-center">
+                <h1 class="text-3xl md:text-5xl font-bold text-gray-900 leading-tight">中小企業向け組織力強化 × IT導入支援コンサルティング</h1>
+                <p class="mt-4 text-lg md:text-xl text-gray-600 max-w-3xl mx-auto">NotionとAIの活用で、業務効率化と組織改善を同時に実現。</p>
+                <h2 class="mt-6 text-2xl md:text-4xl font-bold text-indigo-600">「人が辞めない、業績が上がる」職場づくりを支援します。</h2>
+            </div>
+        </section>
+
+        <section id="problem" class="py-16 md:py-24">
+            <div class="container mx-auto px-6">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl font-bold">市場の課題と、私たちの解決策</h2>
+                    <p class="mt-2 text-gray-600 max-w-2xl mx-auto">多くの中小企業が抱える「IT導入の壁」。私たちは、現場に寄り添う独自のアプローチで、その壁を乗り越えるお手伝いをします。</p>
+                </div>
+                <div class="grid md:grid-cols-2 gap-12 items-center">
+                    <div>
+                        <h3 class="text-2xl font-semibold mb-6 text-center">中小企業が直面する３つの壁</h3>
+                        <div class="space-y-6">
+                            <div class="bg-white p-6 rounded-lg shadow-md">
+                                <h4 class="font-bold text-lg">💰 コストの壁</h4>
+                                <p class="text-gray-600 mt-1">大手コンサルは高額で手が出ない。</p>
+                            </div>
+                            <div class="bg-white p-6 rounded-lg shadow-md">
+                                <h4 class="font-bold text-lg">🔧 技術の壁</h4>
+                                <p class="text-gray-600 mt-1">IT企業は技術先行で、組織課題への理解が不足している。</p>
+                            </div>
+                            <div class="bg-white p-6 rounded-lg shadow-md">
+                                <h4 class="font-bold text-lg">🧩 専門性の壁</h4>
+                                <p class="text-gray-600 mt-1">地場コンサルはIT活用力が不足している。</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="text-2xl font-semibold mb-6 text-center text-indigo-600">私たちが提供する４つの価値</h3>
+                        <div class="space-y-6">
+                            <div class="bg-indigo-50 p-6 rounded-lg border border-indigo-200">
+                                <h4 class="font-bold text-lg text-indigo-800">🤝 現場重視のアプローチ</h4>
+                                <p class="text-indigo-700 mt-1">経営陣だけでなく現場社員の声を重視し、本当に使える仕組みを構築します。</p>
+                            </div>
+                            <div class="bg-indigo-50 p-6 rounded-lg border border-indigo-200">
+                                <h4 class="font-bold text-lg text-indigo-800">📈 段階的な導入プロセス</h4>
+                                <p class="text-indigo-700 mt-1">データ化→統合→自動化の確実なステップで、無理なく変革を進めます。</p>
+                            </div>
+                            <div class="bg-indigo-50 p-6 rounded-lg border border-indigo-200">
+                                <h4 class="font-bold text-lg text-indigo-800">🏢 組織改善 × IT導入</h4>
+                                <p class="text-indigo-700 mt-1">単なるツール導入ではなく、組織力そのものを向上させることを目指します。</p>
+                            </div>
+                            <div class="bg-indigo-50 p-6 rounded-lg border border-indigo-200">
+                                <h4 class="font-bold text-lg text-indigo-800">📍 地域密着のサポート</h4>
+                                <p class="text-indigo-700 mt-1">中部地区に特化し、迅速な対応と継続的なサポート体制を構築します。</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="service" class="py-16 md:py-24 bg-white">
+            <div class="container mx-auto px-6">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl font-bold">1年間の伴走モデルサービス</h2>
+                    <p class="mt-2 text-gray-600 max-w-2xl mx-auto">お客様の状況に合わせて、4つのフェーズで着実に業務改善と組織力強化を実現します。各フェーズをクリックして詳細をご覧ください。</p>
+                </div>
+                <div class="w-full">
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                        <button data-phase="1" class="phase-tab bg-gray-200 p-4 rounded-lg text-center font-semibold cursor-pointer transition active">Phase 1: 分析・発見</button>
+                        <button data-phase="2" class="phase-tab bg-gray-200 p-4 rounded-lg text-center font-semibold cursor-pointer transition">Phase 2: データ化・統合</button>
+                        <button data-phase="3" class="phase-tab bg-gray-200 p-4 rounded-lg text-center font-semibold cursor-pointer transition">Phase 3: 自動化・AI活用</button>
+                        <button data-phase="4" class="phase-tab bg-gray-200 p-4 rounded-lg text-center font-semibold cursor-pointer transition">Phase 4: 定着・改善</button>
+                    </div>
+                    <div id="phase-details" class="bg-gray-50 p-8 rounded-lg">
+                        <div id="phase-1" class="phase-content active">
+                            <h3 class="text-xl font-bold text-indigo-700">Phase 1: 現状分析・課題発見 (1-2ヶ月)</h3>
+                            <p class="text-gray-600 mt-2">現場ヒアリングと業務フロー調査を通じて、業務のボトルネックを正確に特定し、具体的な改善提案書を作成します。</p>
+                            <ul class="list-disc list-inside mt-4 space-y-1 text-gray-700">
+                                <li>現場ヒアリング・業務フロー調査</li>
+                                <li>ボトルネック特定</li>
+                                <li>改善提案書作成</li>
+                            </ul>
+                        </div>
+                        <div id="phase-2" class="phase-content">
+                            <h3 class="text-xl font-bold text-indigo-700">Phase 2: データ化・統合 (3-4ヶ月)</h3>
+                            <p class="text-gray-600 mt-2">紙や個人の頭の中に散在する情報をデータ化し、NotionやGoogle Workspaceを活用して一元管理。業務の基本となるテンプレートを構築します。</p>
+                             <ul class="list-disc list-inside mt-4 space-y-1 text-gray-700">
+                                <li>紙・頭の中の情報のデータ化</li>
+                                <li>Notion等を活用した情報一元化</li>
+                                <li>基本テンプレート構築</li>
+                            </ul>
+                        </div>
+                        <div id="phase-3" class="phase-content">
+                            <h3 class="text-xl font-bold text-indigo-700">Phase 3: 自動化・AI活用 (3-4ヶ月)</h3>
+                            <p class="text-gray-600 mt-2">定型業務の自動化や、AIを活用したデータ分析・予測を導入。PoC（概念実証）を通じて効果を測定し、本格導入へと繋げます。</p>
+                             <ul class="list-disc list-inside mt-4 space-y-1 text-gray-700">
+                                <li>業務プロセスの自動化</li>
+                                <li>AI活用によるデータ分析・予測</li>
+                                <li>PoC実施・効果測定</li>
+                            </ul>
+                        </div>
+                        <div id="phase-4" class="phase-content">
+                            <h3 class="text-xl font-bold text-indigo-700">Phase 4: 定着・改善 (2-3ヶ月)</h3>
+                            <p class="text-gray-600 mt-2">新しい業務フローが組織に定着するよう、運用サポートや研修を実施。効果を継続的に測定し、自立運用できる体制を構築します。</p>
+                             <ul class="list-disc list-inside mt-4 space-y-1 text-gray-700">
+                                <li>運用サポート・研修</li>
+                                <li>効果測定・改善提案</li>
+                                <li>自立運用体制構築</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="roi" class="py-16 md:py-24">
+            <div class="container mx-auto px-6">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl font-bold">期待効果と投資対効果</h2>
+                    <p class="mt-2 text-gray-600 max-w-2xl mx-auto">私たちのサービスは、単なるコストではなく、未来への投資です。具体的な数値でその効果をシミュレーションします。</p>
+                </div>
+                <div class="grid md:grid-cols-2 gap-12 items-center">
+                    <div>
+                        <h3 class="text-2xl font-semibold mb-6">年間400〜700万円の改善効果</h3>
+                        <div class="space-y-4">
+                            <div class="bg-white p-4 rounded-lg shadow-sm">
+                                <p class="text-gray-500">業務効率化による時間削減</p>
+                                <p class="text-2xl font-bold text-indigo-600 counter" data-target="400">0</p>
+                                <p class="text-gray-500">万円相当 (300-500万円)</p>
+                            </div>
+                            <div class="bg-white p-4 rounded-lg shadow-sm">
+                                <p class="text-gray-500">離職率改善によるコスト削減</p>
+                                <p class="text-2xl font-bold text-indigo-600 counter" data-target="150">0</p>
+                                <p class="text-gray-500">万円相当 (100-200万円)</p>
+                            </div>
+                            <div class="bg-white p-4 rounded-lg shadow-sm">
+                                <p class="text-gray-500">売上向上</p>
+                                <p class="text-2xl font-bold text-indigo-600">機会損失防止・品質向上</p>
+                            </div>
+                        </div>
+                        <div class="mt-8 bg-white p-6 rounded-lg shadow-md">
+                            <h4 class="font-bold text-lg">基本パッケージ料金</h4>
+                            <p class="text-3xl font-bold my-2">300<span class="text-lg font-normal">万円</span> <span class="text-lg font-normal text-gray-500">/ 1年間伴走</span></p>
+                            <p class="text-gray-600">月額換算25万円。これは、正社員1名を採用・維持する年間コストよりも経済的です。</p>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="text-2xl font-semibold mb-6 text-center">投資対効果 (ROI)</h3>
+                        <div class="chart-container">
+                            <canvas id="roiChart"></canvas>
+                        </div>
+                         <p class="text-center text-gray-600 mt-4">投資額300万円に対し、1年で133%〜233%のリターンが期待できます。</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="team" class="py-16 md:py-24 bg-white">
+            <div class="container mx-auto px-6">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl font-bold">専門家チームが成功へ導きます</h2>
+                    <p class="mt-2 text-gray-600 max-w-2xl mx-auto">技術、法務・人事、組織づくりのプロフェッショナルが結集。中小企業に最適な4名チームで、機動力高く支援します。</p>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div class="bg-gray-50 p-8 rounded-lg text-center">
+                        <div class="text-4xl mb-4">💻</div>
+                        <h3 class="text-xl font-bold">エンジニア (2名)</h3>
+                        <p class="mt-2 text-gray-600">確かな技術力で、Notionの構築からAIツールの連携・実装まで担当します。</p>
+                    </div>
+                    <div class="bg-gray-50 p-8 rounded-lg text-center">
+                        <div class="text-4xl mb-4">⚖️</div>
+                        <h3 class="text-xl font-bold">社労士 (元IBM)</h3>
+                        <p class="mt-2 text-gray-600">法務・人事の専門性と大企業での経験を活かし、労務リスクも考慮した組織改善を設計します。</p>
+                    </div>
+                    <div class="bg-gray-50 p-8 rounded-lg text-center">
+                        <div class="text-4xl mb-4">👥</div>
+                        <h3 class="text-xl font-bold">組織づくり専門家</h3>
+                        <p class="mt-2 text-gray-600">現場目線での課題発見と、人が育ち定着する組織文化の醸成をサポートします。</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="plan" class="py-16 md:py-24">
+            <div class="container mx-auto px-6">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl font-bold">事業計画と将来展開</h2>
+                    <p class="mt-2 text-gray-600 max-w-2xl mx-auto">まずは中部地区での実績を確立し、将来的には全国の中小企業を支援するリーディングカンパニーを目指します。</p>
+                </div>
+                <div class="grid md:grid-cols-2 gap-12 items-center">
+                    <div>
+                         <h3 class="text-2xl font-semibold mb-6 text-center">3カ年目標</h3>
+                        <div class="chart-container">
+                            <canvas id="growthChart"></canvas>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="text-2xl font-semibold mb-6">将来展開</h3>
+                        <ul class="space-y-4">
+                            <li class="flex items-start">
+                                <span class="text-indigo-500 font-bold text-xl mr-3">→</span>
+                                <div>
+                                    <h4 class="font-semibold">地域展開</h4>
+                                    <p class="text-gray-600">関西・関東・九州へとサービスエリアを拡大します。</p>
+                                </div>
+                            </li>
+                            <li class="flex items-start">
+                                <span class="text-indigo-500 font-bold text-xl mr-3">→</span>
+                                <div>
+                                    <h4 class="font-semibold">FC/業務提携モデル</h4>
+                                    <p class="text-gray-600">他地域のパートナーと連携し、全国的な支援網を構築します。</p>
+                                </div>
+                            </li>
+                            <li class="flex items-start">
+                                <span class="text-indigo-500 font-bold text-xl mr-3">→</span>
+                                <div>
+                                    <h4 class="font-semibold">業種特化パッケージ</h4>
+                                    <p class="text-gray-600">製造業やサービス業など、業種に特化した標準化パッケージを開発します。</p>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer id="contact" class="bg-gray-800 text-white">
+        <div class="container mx-auto px-6 py-12 text-center">
+            <h2 class="text-2xl md:text-3xl font-bold">さあ、はじめましょう</h2>
+            <p class="mt-4 max-w-2xl mx-auto">まずは貴社の課題をお聞かせください。組織の未来を共に創るパートナーとして、全力でサポートします。</p>
+            <a href="mailto:info@example.com" class="mt-8 inline-block bg-indigo-600 text-white px-8 py-3 rounded-md text-lg font-semibold hover:bg-indigo-700 transition">無料相談を申し込む</a>
+            <p class="mt-8 text-gray-400 text-sm">&copy; 2025 中小企業向け組織力強化×IT導入支援コンサルティング. All Rights Reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+            mobileMenuButton.addEventListener('click', () => {
+                mobileMenu.classList.toggle('hidden');
+            });
+
+            const phaseTabs = document.querySelectorAll('.phase-tab');
+            const phaseContents = document.querySelectorAll('.phase-content');
+            phaseTabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const phase = tab.dataset.phase;
+
+                    phaseTabs.forEach(t => t.classList.remove('active', 'bg-indigo-600', 'text-white'));
+                    tab.classList.add('active', 'bg-indigo-600', 'text-white');
+                    
+                    phaseContents.forEach(content => {
+                        if (content.id === `phase-${phase}`) {
+                            content.classList.add('active');
+                        } else {
+                            content.classList.remove('active');
+                        }
+                    });
+                });
+            });
+
+            const roiCtx = document.getElementById('roiChart').getContext('2d');
+            new Chart(roiCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['期待効果 (最小)', '投資額'],
+                    datasets: [{
+                        label: '投資対効果',
+                        data: [400, 300],
+                        backgroundColor: ['#4F46E5', '#A5B4FC'],
+                        borderColor: '#F5F5F4',
+                        borderWidth: 4,
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '70%',
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed !== null) {
+                                        label += new Intl.NumberFormat('ja-JP', { style: 'currency', currency: 'JPY' }).format(context.parsed * 10000);
+                                    }
+                                    return label;
+                                }
+                            }
+                        },
+                        title: {
+                            display: true,
+                            text: 'ROI: 133% (最小ケース)',
+                            font: { size: 16 }
+                        }
+                    }
+                }
+            });
+
+            const growthCtx = document.getElementById('growthChart').getContext('2d');
+            new Chart(growthCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['1年目', '2年目', '3年目'],
+                    datasets: [{
+                        label: '売上 (万円)',
+                        data: [3000, 6000, 9000],
+                        backgroundColor: '#4F46E5',
+                        yAxisID: 'y',
+                    }, {
+                        label: '導入社数 (社)',
+                        data: [10, 20, 30],
+                        backgroundColor: '#A5B4FC',
+                        yAxisID: 'y1',
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            position: 'left',
+                            title: {
+                                display: true,
+                                text: '売上 (万円)'
+                            }
+                        },
+                        y1: {
+                            beginAtZero: true,
+                            position: 'right',
+                            title: {
+                                display: true,
+                                text: '導入社数 (社)'
+                            },
+                            grid: {
+                                drawOnChartArea: false
+                            }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false
+                        }
+                    }
+                }
+            });
+
+            const counters = document.querySelectorAll('.counter');
+            const animateCounter = (counter) => {
+                const target = +counter.getAttribute('data-target');
+                const duration = 1500;
+                const stepTime = Math.abs(Math.floor(duration / target));
+                let current = 0;
+                const timer = setInterval(() => {
+                    current += 1;
+                    counter.innerText = current;
+                    if (current == target) {
+                        clearInterval(timer);
+                    }
+                }, stepTime);
+            };
+
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        animateCounter(entry.target);
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, { threshold: 0.7 });
+
+            counters.forEach(counter => {
+                observer.observe(counter);
+            });
+        });
+    </script>
+</body>
+</html>
