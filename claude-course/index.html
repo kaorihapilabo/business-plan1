@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>社長の右腕は、AIでつくる。｜30日Claude実践講座</title>
+<style>
+  :root{
+    --bg:#f7f5f2; --card:#ffffff; --ink:#24211e; --sub:#6b645c;
+    --accent:#4f46e5; --accent-soft:#eef0ff; --line:#e6e1da;
+    --ok:#0f8a5f; --ok-soft:#e7f6ef; --warn:#b45309; --warn-soft:#fff5e6;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Hiragino Sans","Noto Sans JP","Yu Gothic",sans-serif;
+    background:var(--bg);color:var(--ink);line-height:1.85;font-size:16px}
+  a{color:var(--accent)}
+  .wrap{max-width:880px;margin:0 auto;padding:0 20px}
+  header.top{position:sticky;top:0;z-index:10;background:rgba(247,245,242,.92);
+    backdrop-filter:blur(6px);border-bottom:1px solid var(--line)}
+  header.top .wrap{display:flex;align-items:center;justify-content:space-between;height:56px}
+  .logo{font-weight:700;font-size:15px}
+  nav a{font-size:14px;color:var(--sub);text-decoration:none;margin-left:16px}
+  nav a:hover{color:var(--accent)}
+  .hero{padding:72px 0 56px;text-align:center}
+  .hero .tag{display:inline-block;font-size:13px;background:var(--accent-soft);color:var(--accent);
+    padding:4px 12px;border-radius:999px;margin-bottom:18px}
+  .hero h1{font-size:clamp(28px,5vw,44px);line-height:1.35;margin:0 0 12px}
+  .hero p.lead{font-size:18px;color:var(--sub);margin:0 0 28px}
+  .btn{display:inline-block;background:var(--accent);color:#fff;text-decoration:none;
+    padding:12px 26px;border-radius:10px;font-weight:700}
+  .btn.ghost{background:transparent;color:var(--accent);border:1px solid var(--accent);margin-left:8px}
+  section{padding:48px 0}
+  h2{font-size:26px;margin:0 0 8px}
+  h2 + .sub{color:var(--sub);margin:0 0 28px}
+  h3{font-size:19px;margin:28px 0 8px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;margin:16px 0}
+  .grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+  .grid .card{margin:0}
+  .note{background:var(--warn-soft);border-left:4px solid var(--warn);padding:14px 18px;border-radius:8px;font-size:14px}
+  .tip{background:var(--ok-soft);border-left:4px solid var(--ok);padding:14px 18px;border-radius:8px}
+  table{width:100%;border-collapse:collapse;font-size:15px;background:var(--card)}
+  th,td{border:1px solid var(--line);padding:10px 12px;text-align:left;vertical-align:top}
+  th{background:#faf8f5;font-weight:700;white-space:nowrap}
+  .progress{height:10px;background:var(--line);border-radius:999px;overflow:hidden;margin:8px 0 4px}
+  .progress > div{height:100%;background:var(--accent);width:0;transition:width .4s}
+  .week{margin-top:22px}
+  .week h3{display:flex;align-items:center;gap:10px}
+  .week h3 span.badge{font-size:12px;background:var(--accent);color:#fff;border-radius:6px;padding:2px 8px}
+  ul.days{list-style:none;padding:0;margin:0}
+  ul.days li{display:flex;align-items:flex-start;gap:12px;padding:12px 4px;border-bottom:1px dashed var(--line)}
+  ul.days li:last-child{border-bottom:none}
+  ul.days input{margin-top:6px;width:18px;height:18px;accent-color:var(--accent);flex-shrink:0}
+  ul.days .d{font-weight:700;min-width:58px;color:var(--accent)}
+  ul.days .t{flex:1}
+  ul.days .t small{display:block;color:var(--sub);font-size:13px}
+  ul.days li.done .t{color:var(--sub);text-decoration:line-through}
+  ul.days .soon{font-size:12px;color:var(--sub);border:1px solid var(--line);border-radius:6px;padding:0 6px;white-space:nowrap}
+  ul.days .open{font-size:12px;color:#fff;background:var(--ok);border-radius:6px;padding:0 6px;white-space:nowrap;text-decoration:none}
+  pre.prompt{background:#1f1d2b;color:#f2f0ff;padding:16px 18px;border-radius:10px;white-space:pre-wrap;
+    font-family:inherit;font-size:14.5px;line-height:1.8;position:relative;margin:12px 0}
+  .copy{position:absolute;top:8px;right:8px;font-size:12px;background:#3b3854;color:#fff;border:0;
+    border-radius:6px;padding:4px 10px;cursor:pointer}
+  .quiz .q{margin:18px 0 6px;font-weight:700}
+  .quiz label{display:block;padding:8px 12px;border:1px solid var(--line);border-radius:8px;margin:6px 0;cursor:pointer;background:#fff}
+  .quiz label:hover{border-color:var(--accent)}
+  .quiz label.correct{border-color:var(--ok);background:var(--ok-soft)}
+  .quiz label.wrong{border-color:#c2410c;background:#fff1eb}
+  .quiz .exp{display:none;font-size:14px;color:var(--sub);padding:6px 4px 0}
+  .quiz .exp.show{display:block}
+  #score{font-weight:700;font-size:18px;margin-top:18px}
+  .news .item{border-bottom:1px solid var(--line);padding:12px 0}
+  .news .item:last-child{border-bottom:none}
+  .news .date{font-size:13px;color:var(--sub)}
+  footer{padding:40px 0 60px;color:var(--sub);font-size:13px;text-align:center;border-top:1px solid var(--line)}
+  @media(max-width:640px){nav{display:none}.btn.ghost{margin:10px 0 0}}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <div class="logo">🧭 社長のAI右腕講座</div>
+    <nav>
+      <a href="#about">講座について</a>
+      <a href="#curriculum">カリキュラム</a>
+      <a href="#day1">Day 1</a>
+      <a href="#news">AI最新情報</a>
+    </nav>
+  </div>
+</header>
+
+<!-- ===== HERO ===== -->
+<div class="hero">
+  <div class="wrap">
+    <span class="tag">経営者のための 30日オンライン講座 ｜ β版（無料公開中）</span>
+    <h1>社長の右腕は、<br>AIでつくる。</h1>
+    <p class="lead">30日でClaudeを“自分専属の経営チーム”に育てる実践講座</p>
+    <a class="btn" href="#day1">Day 1 からはじめる</a>
+    <a class="btn ghost" href="#curriculum">30日の全体を見る</a>
+  </div>
+</div>
+
+<!-- ===== ABOUT ===== -->
+<section id="about">
+  <div class="wrap">
+    <h2>この講座について</h2>
+    <p class="sub">「AIの操作説明」ではなく、経営者の仕事をAIに任せられる状態をつくる講座です。</p>
+
+    <div class="grid">
+      <div class="card"><b>👤 こんな方へ</b><br>
+        ・Claudeをまだ使っていない／少し触っただけ<br>
+        ・ChatGPTは使うけど「チャットで終わっている」<br>
+        ・人に頼んでいる仕事をAIで軽くしたい</div>
+      <div class="card"><b>⏱ 学び方</b><br>
+        ・1日 10〜20分<br>
+        ・読む → 真似する → 自分の仕事で試す<br>
+        ・コピペで使える指示文つき</div>
+      <div class="card"><b>🎓 30日後のゴール</b><br>
+        ・自社専用の「プロジェクト」がある<br>
+        ・自分の型を「スキル」にしている<br>
+        ・調査や資料作成をAIに任せられる</div>
+    </div>
+
+    <div class="note" style="margin-top:20px">
+      📌 本講座の画面説明は <b>2026年11月時点</b> のものです。Claudeは更新が早く、ボタンの位置や名前が変わることがあります。<br>
+      「考え方・頼み方の型」は変わらないので、そこを中心に身につけてください。
+    </div>
+  </div>
+</section>
+
+<!-- ===== CURRICULUM ===== -->
+<section id="curriculum">
+  <div class="wrap">
+    <h2>30日カリキュラム</h2>
+    <p class="sub">終わった日にチェック ✅ を入れると進捗が保存されます（この端末のブラウザに保存）。</p>
+
+    <div class="card">
+      <b>あなたの進捗：<span id="pct">0</span>%</b>（<span id="cnt">0</span> / 30日）
+      <div class="progress"><div id="bar"></div></div>
+    </div>
+
+    <div id="weeks"></div>
+  </div>
+</section>
+
+<!-- ===== DAY 1 ===== -->
+<section id="day1">
+  <div class="wrap">
+    <h2>Day 1｜これだけ分かればOK！Claudeの基礎まとめ</h2>
+    <p class="sub">所要時間：約20分。最後に理解度チェック（5問）があります。</p>
+
+    <!-- 1 -->
+    <div class="card">
+      <h3 style="margin-top:0">① Claudeってなに？</h3>
+      <p>Claude（クロード）は、米国のAnthropic（アンソロピック）社がつくったAIアシスタントです。<br>
+      文章を書く・要約する・考えを整理する・資料を読む・調べものをする・表やグラフをつくる、などが得意です。</p>
+      <p>経営者目線でいうと、<b>「24時間いつでも相談できる、優秀な秘書兼参謀」</b>のような存在です。</p>
+      <div class="tip">💡 ポイント：Claudeは<b>「検索エンジン」ではなく「相談相手」</b>。一言で聞くより、状況を説明して“相談”するほど良い答えが返ってきます。</div>
+    </div>
+
+    <!-- 2 -->
+    <div class="card">
+      <h3 style="margin-top:0">② 画面の基本（まずはこの5つだけ）</h3>
+      <table>
+        <tr><th>場所・機能</th><th>何ができる？</th><th>経営者の使いどころ</th></tr>
+        <tr><td>💬 チャット（新しいチャット）</td><td>Claudeと会話する基本の場所。1つの話題＝1つのチャット。</td><td>ちょっとした相談、メール文の作成</td></tr>
+        <tr><td>📁 プロジェクト</td><td>資料と「いつもの指示」をまとめておける“専用の部屋”。その中のチャットは同じ前提を共有します。</td><td>「自社のこと」「新規事業」「採用」など、テーマごとに部屋を分ける</td></tr>
+        <tr><td>📎 ファイル添付</td><td>PDF・Word・Excel・画像などを読ませる。</td><td>決算書の要点整理、契約書のチェックポイント洗い出し</td></tr>
+        <tr><td>🖼 アーティファクト</td><td>チャットの横に、文書・表・Webページなどの“成果物”を作って表示する機能。</td><td>チラシ案、企画書、簡単なツールを作ってもらう</td></tr>
+        <tr><td>🧠 モデル選択</td><td>Claudeの“頭脳”の種類を選べる。高性能なもの・速いものなどがある。</td><td>迷ったら初期設定のままでOK</td></tr>
+      </table>
+      <p style="font-size:14px;color:var(--sub);margin-top:10px">※ 「セッション」という言葉は、主に<b>1回分の作業のまとまり（＝1つのチャットや作業）</b>を指します。Claude Codeなどでは1つの作業単位を「セッション」と呼びます。まずは「チャット1つ＝1セッション」と覚えれば十分です。</p>
+    </div>
+
+    <!-- 3 -->
+    <div class="card">
+      <h3 style="margin-top:0">③ 覚えておきたい用語（Week 3〜4で深掘りします）</h3>
+      <table>
+        <tr><th>用語</th><th>ひとことで</th><th>たとえると</th></tr>
+        <tr><td>スキル</td><td>特定の仕事のやり方・手順・テンプレをClaudeに覚えさせたもの。必要なときに自動で使われる。</td><td>社員に渡す「業務マニュアル」</td></tr>
+        <tr><td>コネクタ</td><td>Googleドライブ・Gmail・カレンダー・Notionなど、外部サービスとClaudeをつなぐ機能。</td><td>秘書に社内システムの“合鍵”を渡す</td></tr>
+        <tr><td>AIエージェント</td><td>指示を受けて、自分で手順を考え、複数の作業を続けてこなすAI。</td><td>「これやっといて」で動いてくれる部下</td></tr>
+        <tr><td>リサーチ</td><td>Claudeが複数の情報源を調べて、レポートにまとめる機能。</td><td>調査会社への依頼</td></tr>
+        <tr><td>メモリ</td><td>過去の会話の内容をClaudeが覚えておく機能（設定でON/OFF可）。</td><td>付き合いの長い秘書</td></tr>
+      </table>
+      <p style="font-size:14px;color:var(--sub);margin-top:10px">※ 利用できる機能はプラン（無料・有料）や環境によって異なります。</p>
+    </div>
+
+    <!-- 4 -->
+    <div class="card">
+      <h3 style="margin-top:0">④ 上手な頼み方「5つの要素」</h3>
+      <p>部下に仕事を頼むときと同じです。次の5つを入れるだけで、答えの質がぐっと上がります。</p>
+      <table>
+        <tr><th>要素</th><th>例</th></tr>
+        <tr><td>1. 役割</td><td>あなたは中小企業専門の経営コンサルタントです</td></tr>
+        <tr><td>2. 目的</td><td>来月の社員向け朝礼で話す内容を作りたい</td></tr>
+        <tr><td>3. 背景</td><td>社員12名の飲食店。最近、遅刻が増えて雰囲気が悪い</td></tr>
+        <tr><td>4. 形式</td><td>3分で話せる原稿。箇条書きの要点つき</td></tr>
+        <tr><td>5. 条件</td><td>責める口調はNG。前向きに締める</td></tr>
+      </table>
+      <p><b>コピペして使ってみよう 👇</b></p>
+      <pre class="prompt"><button class="copy">コピー</button>あなたは中小企業専門の経営コンサルタントです。
+
+【目的】
+〇〇を作りたいです。
+
+【背景】
+・会社：〇〇（業種・人数など）
+・状況：〇〇
+
+【形式】
+〇〇（例：A4一枚、箇条書き、メール文 など）
+
+【条件】
+・〇〇
+・わからない点があれば、作る前に質問してください。</pre>
+      <div class="tip">💡 最後の一文「わからない点があれば、作る前に質問してください」は万能です。Claudeが勝手に想像で埋めるのを防げます。</div>
+    </div>
+
+    <!-- 5 -->
+    <div class="card">
+      <h3 style="margin-top:0">⑤ 安全に使うための3つの約束</h3>
+      <ol>
+        <li><b>事実は必ず確認する</b>：AIはもっともらしい間違いを言うことがあります。数字・法律・固有名詞は一次情報で確認。</li>
+        <li><b>入れていい情報を決める</b>：個人情報・顧客情報・未公開の財務情報などは、社内ルールを決めてから。</li>
+        <li><b>最終判断は人がする</b>：AIは「案を出す係」。決めるのは社長です。</li>
+      </ol>
+      <p style="font-size:14px;color:var(--sub)">※ 入力した内容がAIの学習に使われるかどうかは、プランや設定によって異なります。設定画面のプライバシー項目で確認しましょう。</p>
+    </div>
+
+    <!-- QUIZ -->
+    <div class="card quiz" id="quiz">
+      <h3 style="margin-top:0">✅ 理解度チェック（5問）</h3>
+      <p style="color:var(--sub);font-size:14px">選ぶとすぐに正解と解説が出ます。</p>
+      <div id="quizBody"></div>
+      <div id="score"></div>
+    </div>
+
+    <!-- HOMEWORK -->
+    <div class="card">
+      <h3 style="margin-top:0">✏️ 今日の宿題（5分）</h3>
+      <p>上の「5つの要素」テンプレを使って、<b>今週あなたが実際に書く予定のメールや文章</b>を1つClaudeに頼んでみてください。</p>
+      <p>うまくいかなかったら、Claudeに<b>「もっと〇〇な感じにして」</b>と追加でお願いしてOK。やり直しは何回でも無料です😊</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== NEWS ===== -->
+<section id="news">
+  <div class="wrap">
+    <h2>📰 経営者のためのAI最新情報</h2>
+    <p class="sub">「これは知っておくべき」というニュースだけを、経営者目線でかみくだいてお届けします。</p>
+    <div class="card news">
+      <div class="item">
+        <div class="date">2026.11 ｜ お知らせ</div>
+        <b>講座β版を公開しました</b><br>
+        まずはDay 1を公開。Day 2以降は順次追加していきます。感想・ご要望をお待ちしています。
+      </div>
+      <div class="item">
+        <div class="date">準備中</div>
+        AIの新機能・活用事例・注意点などを定期的に追加予定です。
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== UPDATE LOG ===== -->
+<section id="log">
+  <div class="wrap">
+    <h2>🛠 更新履歴</h2>
+    <div class="card">
+      <ul style="margin:0;padding-left:20px">
+        <li>2026.11.11　β版公開（講座トップ・30日カリキュラム・Day 1・理解度チェック）</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<footer>
+  社長の右腕は、AIでつくる。｜30日Claude実践講座（β版）<br>
+  ※ Claudeは Anthropic社の製品です。本講座は Anthropic社の公式講座ではありません。
+</footer>
+
+<script>
+/* ===== 30日カリキュラム ===== */
+const WEEKS = [
+  { name:"Day 1", label:"スタート", days:[
+    [1,"これだけ分かればOK！Claudeの基礎まとめ","全体像・画面・用語・頼み方・安全ルール＋理解度チェック", true],
+  ]},
+  { name:"Week 1", label:"画面と基本操作をマスター", days:[
+    [2,"アカウント作成と初期設定","プランの違い／プロフィール・プライバシー設定"],
+    [3,"チャットを使いこなす","やり直し・追加指示・チャットの整理術"],
+    [4,"ファイルを読ませる","PDF・Excel・画像を要約／比較／チェックさせる"],
+    [5,"プロジェクトで「専用の部屋」をつくる","資料と“いつもの指示”の入れ方"],
+    [6,"アーティファクトで成果物をつくる","文書・表・簡単なWebページを作る"],
+    [7,"Week 1 まとめ課題","自社紹介プロジェクトを完成させる"],
+  ]},
+  { name:"Week 2", label:"経営業務で使い倒す", days:[
+    [8,"壁打ち相手にする","新規事業・値上げ・人事の悩みを整理する"],
+    [9,"文章仕事を任せる","メール・お知らせ・謝罪文・挨拶文"],
+    [10,"発信を任せる","SNS投稿・ブログ・チラシのたたき台"],
+    [11,"数字を読ませる","売上表・試算表から気づきを出す"],
+    [12,"調べものを任せる","Web検索・リサーチ機能で市場や競合を調べる"],
+    [13,"会議と資料","議事録の要約・企画書・提案書の骨子"],
+    [14,"Week 2 まとめ課題","自分の“よくある仕事トップ5”をClaude化"],
+  ]},
+  { name:"Week 3", label:"スキルで“仕組み化”", days:[
+    [15,"スキルとは何か","プロンプト・プロジェクト・スキルの違い"],
+    [16,"既存のスキルを使ってみる","文書・スライド・表計算などの作成"],
+    [17,"自分の“型”を言語化する","業務マニュアルをClaudeと一緒に作る"],
+    [18,"はじめてのスキル作成","自社の文章ルールをスキルにする"],
+    [19,"スキルを改善する","うまく動かないときの直し方"],
+    [20,"社内で共有する","チームでスキル・プロジェクトを使う"],
+    [21,"Week 3 まとめ課題","自分専用スキルを3つ完成させる"],
+  ]},
+  { name:"Week 4", label:"AIエージェントに任せる", days:[
+    [22,"AIエージェントとは","「答えるAI」から「動くAI」へ"],
+    [23,"コネクタで外部サービスとつなぐ","Googleドライブ・Gmail・カレンダー・Notion等"],
+    [24,"パソコン作業を任せる","デスクトップアプリ・ブラウザ操作系のエージェント機能"],
+    [25,"定期作業を自動化する","毎朝のまとめ・週次レポートなど"],
+    [26,"ノーコードで小さなツールを作る","社内用の計算ツール・チェックリスト"],
+    [27,"リスクと社内ルール","情報漏えい・誤情報・著作権への備え"],
+    [28,"社員にAIを広めるには","導入の順番・教え方・つまずきポイント"],
+    [29,"卒業課題の準備","自社専用Claude環境の設計図をつくる"],
+  ]},
+  { name:"Day 30", label:"卒業", days:[
+    [30,"卒業課題","自社専用Claude環境の完成＆90日後の活用プラン"],
+  ]},
+];
+
+const KEY="claudeCourseProgress_v1";
+const done = new Set(JSON.parse(localStorage.getItem(KEY)||"[]"));
+const weeksEl = document.getElementById("weeks");
+
+WEEKS.forEach(w=>{
+  const box=document.createElement("div");
+  box.className="card week";
+  box.innerHTML=`<h3 style="margin-top:0"><span class="badge">${w.name}</span>${w.label}</h3><ul class="days"></ul>`;
+  const ul=box.querySelector("ul");
+  w.days.forEach(([n,t,s,open])=>{
+    const li=document.createElement("li");
+    if(done.has(n)) li.classList.add("done");
+    li.innerHTML=`<input type="checkbox" ${done.has(n)?"checked":""} aria-label="Day ${n} 完了">
+      <span class="d">Day ${n}</span>
+      <span class="t">${t}<small>${s}</small></span>
+      ${open?'<a class="open" href="#day1">公開中</a>':'<span class="soon">準備中</span>'}`;
+    li.querySelector("input").addEventListener("change",e=>{
+      e.target.checked?done.add(n):done.delete(n);
+      li.classList.toggle("done",e.target.checked);
+      save();
+    });
+    ul.appendChild(li);
+  });
+  weeksEl.appendChild(box);
+});
+function save(){
+  localStorage.setItem(KEY,JSON.stringify([...done]));
+  const c=done.size, p=Math.round(c/30*100);
+  document.getElementById("cnt").textContent=c;
+  document.getElementById("pct").textContent=p;
+  document.getElementById("bar").style.width=p+"%";
+}
+save();
+
+/* ===== コピーボタン ===== */
+document.querySelectorAll(".copy").forEach(b=>{
+  b.addEventListener("click",()=>{
+    const text=b.parentElement.innerText.replace(/^コピー(済み)?\n?/,"");
+    navigator.clipboard.writeText(text).then(()=>{b.textContent="コピー済み";setTimeout(()=>b.textContent="コピー",1500)});
+  });
+});
+
+/* ===== 理解度チェック ===== */
+const QUIZ=[
+  {q:"Q1. Claudeに良い答えをもらうコツとして、最も適切なのは？",
+   a:["できるだけ短く、一言で聞く","状況や目的を説明して“相談”する","英語で質問する"],c:1,
+   e:"Claudeは相談相手。背景・目的・形式を伝えるほど、的確な答えになります。"},
+  {q:"Q2. 「自社の資料」と「いつもの指示」をまとめておき、テーマごとに使い分ける機能は？",
+   a:["アーティファクト","プロジェクト","モデル選択"],c:1,
+   e:"プロジェクトは“専用の部屋”。その中のチャットは同じ資料・指示を前提に会話できます。"},
+  {q:"Q3. 「業務の手順やテンプレをClaudeに覚えさせ、必要なときに使わせる」ものは？",
+   a:["スキル","メモリ","コネクタ"],c:0,
+   e:"スキルは“業務マニュアル”のようなもの。Week 3で実際に作ります。"},
+  {q:"Q4. GmailやGoogleドライブなど、外部サービスとClaudeをつなぐ機能は？",
+   a:["リサーチ","コネクタ","アーティファクト"],c:1,
+   e:"コネクタは外部サービスへの“合鍵”。どこまで許可するかは自分で決められます。"},
+  {q:"Q5. AIの回答に含まれる数字や法律情報は、どう扱うべき？",
+   a:["AIが言うなら正しいので、そのまま使う","一次情報で確認してから使う","使わないほうがよい"],c:1,
+   e:"AIはもっともらしい間違いをすることがあります。重要な事実は必ず確認。最終判断は人がします。"},
+];
+const qb=document.getElementById("quizBody");
+let answered=0, correct=0;
+QUIZ.forEach((item,i)=>{
+  const div=document.createElement("div");
+  div.innerHTML=`<div class="q">${item.q}</div>`+
+    item.a.map((x,j)=>`<label><input type="radio" name="q${i}" value="${j}"> ${x}</label>`).join("")+
+    `<div class="exp"></div>`;
+  div.querySelectorAll("input").forEach(inp=>{
+    inp.addEventListener("change",()=>{
+      const j=+inp.value, labels=div.querySelectorAll("label");
+      labels.forEach((l,k)=>{l.classList.remove("correct","wrong"); if(k===item.c) l.classList.add("correct");});
+      if(j!==item.c) labels[j].classList.add("wrong");
+      div.querySelectorAll("input").forEach(x=>x.disabled=true);
+      const exp=div.querySelector(".exp");
+      exp.textContent=(j===item.c?"⭕ 正解！ ":"❌ 惜しい！ ")+item.e;
+      exp.classList.add("show");
+      answered++; if(j===item.c) correct++;
+      if(answered===QUIZ.length){
+        document.getElementById("score").textContent =
+          `結果：${correct} / ${QUIZ.length} 問正解 ` +
+          (correct===QUIZ.length?"🎉 Day 1 クリア！カリキュラムのDay 1にチェックを入れましょう。":"👍 解説を読み返して、もう一度確認しておきましょう。");
+      }
+    });
+  });
+  qb.appendChild(div);
+});
+</script>
+</body>
+</html>
