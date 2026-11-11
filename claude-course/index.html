@@ -366,7 +366,7 @@ save();
 document.querySelectorAll(".copy").forEach(b=>{
   b.addEventListener("click",()=>{
     const text=b.parentElement.innerText.replace(/^コピー(済み)?\n?/,"");
-    navigator.clipboard.writeText(text).then(()=>{b.textContent="コピー済み";setTimeout(()=>b.textContent="コピー",1500)});
+    navigator.clipboard.writeText(text).then(()=>{b.textContent="コピー済み";setTimeout(()=>b.textContent="コピー",1500)}).catch(()=>{b.textContent="手動で選択してコピー"});
   });
 });
 
