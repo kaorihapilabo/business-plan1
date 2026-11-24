@@ -58,10 +58,11 @@
   button.primary{background:#fff;color:#1e293b;min-width:130px}
 
   /* 起動画面 */
-  #gate{position:fixed;inset:0;background:rgba(15,23,42,.92);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;z-index:50;text-align:center;padding:24px}
+  #gate{position:fixed;inset:0;background:#0f172a;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;z-index:50;text-align:center;padding:24px}
   #gate h1{font-size:clamp(24px,4vw,44px)}
   #gate p{opacity:.85;max-width:560px;line-height:1.7}
-  #gate button{font-size:22px;padding:18px 36px}
+  #gate #gateBtn{font-size:24px;padding:20px 40px}
+  #gate p b{white-space:nowrap}
   #gate.hide{display:none}
 
   dialog{margin:auto;border:none;border-radius:16px;padding:0;width:min(640px,95vw);color:#1e293b;max-height:92vh}
@@ -96,8 +97,14 @@
 
 <div id="gate">
   <h1 id="gateTitle">飛騨商談会 タイムキーパー</h1>
-  <p>画面をタップすると、時間表に合わせて自動で進行します。<br>チャイムと音声アナウンスを鳴らすため、最初に一度タップしてください。</p>
-  <button id="gateBtn" class="primary">▶ タップして開始</button>
+  <div id="gateClock" style="font-size:clamp(18px,3vw,28px);font-variant-numeric:tabular-nums;opacity:.85"></div>
+  <p id="gateInfo"></p>
+  <button id="gateBtn" class="primary">▶ 第1セッション スタート</button>
+  <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">
+    <button id="gateList">📋 途中のセッションから始める</button>
+    <button id="gateTest">🔔 音テスト</button>
+    <button id="gateSet">⚙ 設定</button>
+  </div>
 </div>
 
 <header>
@@ -124,6 +131,7 @@
   <button id="btnPlus" title="残り時間を30秒増やす（以降も後ろにずれます）">＋30秒</button>
   <button id="btnSkip" title="次の区切りへ進む">次へ ⏭</button>
   <button id="btnSync" title="遅れ・早まりをなくして時間表どおりに戻す">⟲ 予定時刻に戻す</button>
+  <button id="btnReset" title="スタート前の画面に戻る">⏹ 最初に戻す</button>
   <button id="btnList">📋 時間表</button>
   <button id="btnTest">🔔 音テスト</button>
   <button id="btnSettings">⚙ 設定</button>
@@ -133,7 +141,7 @@
 <dialog id="dlgList">
   <div class="dlg">
     <h2>📋 商談時間表</h2>
-    <p class="note">「ここから」を押すと、そのセッションの<b>開始1分前</b>から進行します（リハーサルや進行の調整に）。本番の時刻に戻すときは「予定時刻に戻す」を押してください。</p>
+    <p class="note">「ここから」を押すと、<b>押した瞬間にそのセッションが始まり</b>、以降は時間表どおり（入れ替え2分・休憩込み）に進みます。</p>
     <table><thead><tr><th>回</th><th>セラー</th><th>方式</th><th>開始</th><th>終了</th><th></th></tr></thead><tbody id="listBody"></tbody></table>
     <div class="btns"><button id="listClose">閉じる</button></div>
   </div>
@@ -313,6 +321,7 @@ function onEnter(p, prev, natural){
 function setMsg(t){ $("msg").textContent = t; flash(); }
 
 function tick(){
+  if (!started){ renderGate(); return; }
   if (!PH.length){ render(); return; }
   const t = schedNow(), p = phaseAt(t);
   if (p !== cur){
@@ -384,6 +393,14 @@ function render(){
   $("next").textContent = nx;
   renderTimeline(talks);
 }
+function renderGate(){
+  $("gateClock").textContent = "🕒 現在 " + new Date().toLocaleTimeString("ja-JP");
+  const f = firstTalk();
+  $("gateInfo").innerHTML = f
+    ? `スタートを押すと <b>${esc(f.name)}（${esc(f.group)}グループ${f.method ? "・" + esc(f.method) : ""}／予定 ${hm(f.start)}〜）</b> がすぐ始まります。<br>以降は時間表どおり、入れ替え2分・休憩を挟んで自動で進みます。`
+    : "時間表にセッションがありません。⚙設定から入力してください。";
+  $("gateBtn").disabled = !f;
+}
 function fmtDelay(s){ return s >= 60 ? `${Math.floor(s/60)}分${s%60 ? s%60+"秒" : ""}` : `${s}秒`; }
 let lastTL = "";
 function renderTimeline(talks){
@@ -399,7 +416,29 @@ function flash(){ document.body.classList.remove("flash"); void document.body.of
 
 // ===== 操作 =====
 function setOffsetTo(schedTarget, isQuiet){ offset = realNow() - midnight() - schedTarget; quiet = isQuiet; tick(); }
-$("gateBtn").onclick = () => { audio(); keepAwake(); started = true; $("gate").classList.add("hide"); try{ speechSynthesis.getVoices(); }catch(e){} cur = null; quiet = true; tick(); };
+function startAt(e){   // e の開始時刻 = 今 として進行開始
+  audio(); keepAwake(); try{ speechSynthesis.getVoices(); }catch(x){}
+  started = true; paused = false; $("gate").classList.add("hide");
+  offset = Date.now() - midnight() - e.start;
+  const ph = PH.find(p => p.start === e.start && p.type === e.type);
+  cur = ph && ph.i > 0 ? PH[ph.i - 1] : null; quiet = false;   // 直前から「自然に」入ったことにして開始アナウンスを鳴らす
+  if (!cur) quiet = true;
+  tick();
+}
+const firstTalk = () => EV.find(e => e.type === "talk");
+$("gateBtn").onclick = () => { const f = firstTalk(); if (f) startAt(f); };
+$("gateList").onclick = () => $("btnList").click();
+$("gateTest").onclick = () => $("btnTest").click();
+$("gateSet").onclick = () => $("btnSettings").click();
+let resetArmed = false;
+$("btnReset").onclick = () => {
+  if (!resetArmed){ resetArmed = true; $("btnReset").textContent = "もう一度押すと戻ります";
+    setTimeout(() => { resetArmed = false; $("btnReset").textContent = "⏹ 最初に戻す"; }, 3000); return; }
+  resetArmed = false; $("btnReset").textContent = "⏹ 最初に戻す";
+  started = false; paused = false; offset = 0; cur = null;
+  try{ speechSynthesis.cancel(); }catch(x){}
+  $("gate").classList.remove("hide"); document.body.className = "p-info"; tick();
+};
 $("btnPause").onclick = () => {
   if (paused){ offset += Date.now() - pausedAt; paused = false; say("再開します。"); }
   else { pausedAt = Date.now(); paused = true; say("一時停止します。"); }
@@ -437,8 +476,7 @@ $("listBody").addEventListener("click", ev => {
   const b = ev.target.closest("button[data-k]"); if (!b) return;
   const e = EV[+b.dataset.k];
   $("dlgList").close();
-  if (paused){ paused = false; }
-  setOffsetTo(e.type === "talk" ? e.start - 60000 : e.start, true);
+  startAt(e);
 });
 $("listClose").onclick = () => $("dlgList").close();
 
@@ -460,7 +498,7 @@ $("dlgSet").addEventListener("close", () => {
 });
 function applyTitle(){ $("title").textContent = S.title; $("gateTitle").textContent = S.title; document.title = S.title; }
 
-applyTitle(); build(); quiet = true; tick();
+applyTitle(); build(); tick();
 setInterval(tick, 200);
 }
 </script>
