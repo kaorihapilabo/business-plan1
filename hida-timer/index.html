@@ -79,6 +79,8 @@
   .row input[type=number]{width:90px;font:inherit;font-size:16px;padding:6px 8px;border:1px solid #cbd5e1;border-radius:8px;text-align:right}
   .row input[type=text]{width:min(300px,55vw);font:inherit;font-size:16px;padding:6px 8px;border:1px solid #cbd5e1;border-radius:8px}
   .row input[type=checkbox]{width:22px;height:22px}
+  .row select{font:inherit;font-size:15px;padding:6px 8px;border:1px solid #cbd5e1;border-radius:8px;max-width:min(320px,55vw)}
+  .row input[type=range]{width:min(220px,45vw)}
   textarea{width:100%;height:260px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:14px;padding:8px;border:1px solid #cbd5e1;border-radius:8px;margin-top:6px}
   #err{color:#dc2626;font-size:13px;font-weight:700;margin-top:6px}
 
@@ -155,6 +157,10 @@
     <div class="row"><label>開始前のアナウンス<small>開始1分前・10秒前・3・2・1</small></label><input type="checkbox" id="sPre"></div>
     <div class="row"><label>休憩で遅れを調整<small>遅れていても休憩明けは予定時刻に戻します（休憩が5分以上残る場合）</small></label><input type="checkbox" id="sAbsorb"></div>
     <div class="row"><label>音声アナウンス</label><input type="checkbox" id="sVoice"></div>
+    <div class="row"><label>声の種類<small>★が付いた声ほど自然です（端末により異なります）</small></label><select id="sVoiceName"></select></div>
+    <div class="row"><label>話す速さ <span id="rateV"></span></label><input type="range" id="sRate" min="0.7" max="1.3" step="0.05"></div>
+    <div class="row"><label>声の高さ <span id="pitchV"></span></label><input type="range" id="sPitch" min="0.7" max="1.3" step="0.05"></div>
+    <div class="row"><label>試しに聞く</label><button type="button" id="btnPreview">▶ 試聴</button></div>
     <div class="row"><label>チャイム音</label><input type="checkbox" id="sChime"></div>
     <div style="padding-top:10px">
       <label style="font-weight:600">時間表</label>
@@ -192,7 +198,7 @@ const DEFAULT_SCHED = `13:00-13:10 開会｜1.あいさつ（飛騨市）　2.�
 16:31-16:41 第15セッション｜A｜自由商談
 16:43-16:53 第16セッション｜B｜自由商談
 16:55- 諸連絡｜4.意見交換会等のご案内　※終了後、バイヤーは貸切バスでひだホテルプラザへご案内`;
-const DEFAULTS = { title:"飛騨地域インバウンド観光商談会 2026", warn:1, pre:true, absorb:true, voice:true, chime:true, sched:DEFAULT_SCHED };
+const DEFAULTS = { title:"飛騨地域インバウンド観光商談会 2026", warn:1, pre:true, absorb:true, voice:true, voiceName:"", rate:0.95, pitch:1.0, chime:true, sched:DEFAULT_SCHED };
 const KEY = "hidaTimer.v2";
 let S = Object.assign({}, DEFAULTS);
 try{ Object.assign(S, JSON.parse(localStorage.getItem(KEY) || "{}")); }catch(e){}
@@ -284,10 +290,33 @@ function say(text, delay=0){
   clearTimeout(sayTimer);
   sayTimer = setTimeout(() => { try{
     const u = new SpeechSynthesisUtterance(text); u.lang = "ja-JP";
-    const v = speechSynthesis.getVoices().find(v => /^ja/i.test(v.lang)); if (v) u.voice = v;
+    const v = pickVoice(S.voiceName); if (v){ u.voice = v; u.lang = v.lang; }
+    u.rate = S.rate || 0.95; u.pitch = S.pitch || 1; u.volume = 1;
     speechSynthesis.cancel(); speechSynthesis.speak(u);
   }catch(e){} }, delay);
 }
+// 日本語の声を品質順に並べる（ニューラル音声・高品質音声を優先）
+function voiceScore(v){
+  const n = v.name; let sc = 0;
+  if (/Natural|Neural|Online/i.test(n)) sc += 60;           // Edge のニューラル音声（Nanami など）
+  if (/Premium|Enhanced|プレミアム|拡張/i.test(n)) sc += 50;  // Apple の高品質音声
+  if (/Google/i.test(n)) sc += 35;
+  if (/Nanami|Kyoko|O-?ren|Hattori|Otoya/i.test(n)) sc += 10;
+  if (/Ichiro|Ayumi|Sayaka/i.test(n)) sc -= 5;
+  return sc;
+}
+function jaVoices(){
+  try{ return speechSynthesis.getVoices().filter(v => /^ja/i.test(v.lang)).sort((a,b) => voiceScore(b) - voiceScore(a)); }catch(e){ return []; }
+}
+function pickVoice(name){ const vs = jaVoices(); return (name && vs.find(v => v.name === name)) || vs[0] || null; }
+function fillVoices(){
+  const sel = $("sVoiceName"), vs = jaVoices(), keep = sel.value || S.voiceName;
+  if (!vs.length){ sel.innerHTML = `<option value="">（日本語の声が見つかりません）</option>`; return; }
+  sel.innerHTML = `<option value="">おまかせ（${esc(vs[0].name)}）</option>` +
+    vs.map(v => `<option value="${esc(v.name)}">${voiceScore(v) >= 35 ? "★ " : ""}${esc(v.name)}</option>`).join("");
+  sel.value = vs.some(v => v.name === keep) ? keep : "";
+}
+try{ speechSynthesis.addEventListener("voiceschanged", fillVoices); }catch(e){}
 let wakeLock = null;
 async function keepAwake(){ try{ if ("wakeLock" in navigator && !wakeLock){ wakeLock = await navigator.wakeLock.request("screen"); wakeLock.addEventListener("release", () => wakeLock = null); } }catch(e){} }
 document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") keepAwake(); });
@@ -481,9 +510,20 @@ $("listBody").addEventListener("click", ev => {
 $("listClose").onclick = () => $("dlgList").close();
 
 // 設定ダイアログ
-const F = { sTitle:"title", sWarn:"warn", sPre:"pre", sAbsorb:"absorb", sVoice:"voice", sChime:"chime", sSched:"sched" };
+const F = { sTitle:"title", sWarn:"warn", sPre:"pre", sAbsorb:"absorb", sVoice:"voice", sVoiceName:"voiceName", sRate:"rate", sPitch:"pitch", sChime:"chime", sSched:"sched" };
+const showRange = () => { $("rateV").textContent = "×" + (+$("sRate").value).toFixed(2); $("pitchV").textContent = "×" + (+$("sPitch").value).toFixed(2); };
+$("sRate").addEventListener("input", showRange); $("sPitch").addEventListener("input", showRange);
+$("btnPreview").onclick = () => {
+  const keep = { voice:S.voice, voiceName:S.voiceName, rate:S.rate, pitch:S.pitch };
+  Object.assign(S, { voice:true, voiceName:$("sVoiceName").value, rate:+$("sRate").value, pitch:+$("sPitch").value });
+  say("第1セッション、開始1分前です。Aグループの皆さま、ご準備ください。");
+  setTimeout(() => Object.assign(S, keep), 300);
+};
 $("btnSettings").onclick = () => {
+  fillVoices();
   for (const [id,k] of Object.entries(F)){ const el = $(id); if (el.type === "checkbox") el.checked = !!S[k]; else el.value = S[k]; }
+  if (![...$("sVoiceName").options].some(o => o.value === S.voiceName)) $("sVoiceName").value = "";
+  showRange();
   $("err").textContent = ""; $("dlgSet").showModal();
 };
 $("btnDefault").onclick = () => { $("sSched").value = DEFAULT_SCHED; checkSched(); };
@@ -492,7 +532,7 @@ $("sSched").addEventListener("input", checkSched);
 $("saveBtn").addEventListener("click", e => { if (!checkSched()) e.preventDefault(); });
 $("dlgSet").addEventListener("close", () => {
   if ($("dlgSet").returnValue !== "ok") return;
-  for (const [id,k] of Object.entries(F)){ const el = $(id); S[k] = el.type === "checkbox" ? el.checked : el.type === "number" ? Math.max(0, parseFloat(el.value)||0) : el.value; }
+  for (const [id,k] of Object.entries(F)){ const el = $(id); S[k] = el.type === "checkbox" ? el.checked : (el.type === "number" || el.type === "range") ? Math.max(0, parseFloat(el.value)||0) : el.value; }
   try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){}
   applyTitle(); build(); cur = null; quiet = true; lastTL = ""; tick();
 });
