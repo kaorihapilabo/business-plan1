@@ -28,7 +28,7 @@
   body.flash{animation:flash .9s ease 2}
   @keyframes flash{0%,100%{filter:none}50%{filter:brightness(1.6)}}
 
-  header{display:flex;justify-content:space-between;align-items:center;padding:12px 20px;gap:12px;flex-wrap:wrap}
+  header{display:flex;justify-content:space-between;align-items:center;padding:calc(12px + env(safe-area-inset-top)) 20px 12px;gap:12px;flex-wrap:wrap}
   .title{font-weight:700;font-size:clamp(14px,2.2vw,20px);opacity:.9}
   .clock{font-variant-numeric:tabular-nums;font-size:clamp(14px,2.2vw,20px);opacity:.85}
 
@@ -113,6 +113,7 @@
     <div class="row"><label>最初の開始前（分）<small>スタート押下〜第1ラウンド開始</small></label><input type="number" id="sFirst" min="0" max="30" step="0.5"></div>
     <div class="row"><label>音声アナウンス<small>「開始1分前です」など読み上げ</small></label><input type="checkbox" id="sVoice"></div>
     <div class="row"><label>チャイム音</label><input type="checkbox" id="sChime"></div>
+    <div class="row" id="applyRow"><label>今の進行にも反映<small>今のラウンドを新しい設定でやり直します（オフなら次回スタートから）</small></label><input type="checkbox" id="sApply"></div>
     <div class="flow" id="flowText"></div>
     <div class="btns">
       <button value="cancel" formnovalidate>キャンセル</button>
@@ -126,7 +127,8 @@
   // ===== 設定 =====
   const DEFAULTS = { title:"飛騨商談会 タイムキーパー", rounds:6, talk:10, warn:1, move:2, first:1, voice:true, chime:true };
   const KEY = "hidaTimerSettings.v1";
-  let S = Object.assign({}, DEFAULTS, JSON.parse(localStorage.getItem(KEY) || "{}"));
+  let saved = {}; try{ saved = JSON.parse(localStorage.getItem(KEY) || "{}"); }catch(e){}
+  let S = Object.assign({}, DEFAULTS, saved);
 
   // ===== 状態 =====
   // phases: [{type:'prep'|'talk'|'move', round, dur(ms), cues:[{at(残りms), text, sound}]}]
@@ -318,9 +320,14 @@
     render();
   }
   function skip(){ if (idx<0 || finished) return; const wasRunning = running; running = true; enterPhase(idx+1); if (!wasRunning && !finished){ remainPaused = phases[idx].dur; running = false; render(); } }
+  let resetArmed = false;
   function reset(){
-    if (idx >= 0 && !finished && !confirm("タイマーをリセットしますか？")) return;
-    running=false; finished=false; idx=-1; phases=[]; lastTL=""; speechSynthesis && speechSynthesis.cancel(); $("msg").textContent=""; render();
+    if (idx >= 0 && !finished && !resetArmed){
+      resetArmed = true; $("btnReset").textContent = "もう一度押すとリセット";
+      setTimeout(()=>{ resetArmed = false; $("btnReset").textContent = "リセット"; }, 3000); return;
+    }
+    resetArmed = false; $("btnReset").textContent = "リセット";
+    running=false; finished=false; idx=-1; phases=[]; lastTL=""; if ("speechSynthesis" in window) speechSynthesis.cancel(); $("msg").textContent=""; render();
   }
 
   $("btnStart").onclick = startPause;
@@ -329,7 +336,7 @@
   $("btnSkip").onclick  = skip;
   $("btnReset").onclick = reset;
   $("btnTest").onclick  = () => { audio(); play("chime"); say("音声テストです。開始1分前です。", 1300); };
-  $("btnFull").onclick  = () => { const d=document.documentElement; if(!document.fullscreenElement){ (d.requestFullscreen||d.webkitRequestFullscreen||(()=>{})).call(d); } else { document.exitFullscreen(); } };
+  $("btnFull").onclick  = () => { try{ const d=document.documentElement; if(!document.fullscreenElement){ const f=d.requestFullscreen||d.webkitRequestFullscreen; if(f){ const pr=f.call(d); if(pr&&pr.catch) pr.catch(()=>{}); } } else { document.exitFullscreen(); } }catch(e){} };
   document.addEventListener("keydown", e => {
     if ($("dlg").open) return;
     if (e.code==="Space"){ e.preventDefault(); startPause(); }
@@ -351,6 +358,7 @@
   }
   $("btnSettings").onclick = () => {
     for (const [id,k] of Object.entries(F)){ const el=$(id); if (el.type==="checkbox") el.checked=!!S[k]; else el.value=S[k]; }
+    $("sApply").checked = false; $("applyRow").style.display = (idx >= 0 && !finished) ? "" : "none";
     flowText(); $("dlg").showModal();
   };
   $("form").addEventListener("input", flowText);
@@ -359,10 +367,10 @@
     const n = {};
     for (const [id,k] of Object.entries(F)){ const el=$(id); n[k] = el.type==="checkbox" ? el.checked : el.type==="number" ? Math.max(0, parseFloat(el.value)||0) : el.value; }
     n.rounds = Math.max(1, Math.round(n.rounds)); n.talk = Math.max(0.5, n.talk); n.move = Math.max(0.5, n.move);
-    S = n; localStorage.setItem(KEY, JSON.stringify(S));
+    S = n; try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){}
     $("title").textContent = S.title; document.title = S.title;
     if (idx >= 0 && !finished){
-      if (confirm("設定を今の進行にも反映しますか？\n（OK：今のラウンドから新しい設定でやり直し／キャンセル：次回スタートから反映）")){
+      if ($("sApply").checked){
         const curRound = phases[idx].round, curType = phases[idx].type;
         phases = buildPhases(); lastTL = "";
         let j = phases.findIndex(p => p.round===curRound && p.type===curType); if (j<0) j = phases.findIndex(p=>p.round===curRound); if (j<0) j = phases.length;
